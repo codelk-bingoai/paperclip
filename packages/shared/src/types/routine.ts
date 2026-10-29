@@ -44,6 +44,7 @@ export interface RoutineAgentSummary {
   name: string;
   role: string;
   title: string | null;
+  icon: string | null;
   urlKey?: string | null;
 }
 

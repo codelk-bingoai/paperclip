@@ -1984,7 +1984,24 @@ export function routineService(
           ? db.select().from(projects).where(eq(projects.id, row.projectId)).then((rows) => rows[0] ?? null)
           : null,
         row.assigneeAgentId
-          ? db.select().from(agents).where(eq(agents.id, row.assigneeAgentId)).then((rows) => rows[0] ?? null)
+          // Project to RoutineAgentSummary. A bare select() returned the whole
+          // agent row here, including `adapterConfig` and `runtimeConfig` --
+          // both of which `GET /api/agents/:id` redacts for a caller without
+          // `agent_config:read` (CODA-38975). `assertCompanyAccess` is the only
+          // gate in front of this route, so add a column only once it is safe
+          // for every company member. `icon` is required by the routines UI and
+          // is already company-readable via the agent list route.
+          ? db
+              .select({
+                id: agents.id,
+                name: agents.name,
+                role: agents.role,
+                title: agents.title,
+                icon: agents.icon,
+              })
+              .from(agents)
+              .where(eq(agents.id, row.assigneeAgentId))
+              .then((rows) => rows[0] ?? null)
           : null,
         row.parentIssueId ? issueSvc.getById(row.parentIssueId) : null,
         getRoutineDescriptionDocument(row.id),
